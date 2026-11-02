@@ -1,0 +1,16 @@
+[project]
+name = "spiri-cloud-link"
+version = "0.1.0"
+description = "Links a Spiri robot to its organization's Spiri Cloud"
+requires-python = ">=3.13"
+
+[tool.ruff]
+# The code is written dense, with dict(...) for JSON-shaped values.
+line-length = 120
+
+[tool.ruff.lint]
+ignore = ["C408"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["cloud-link/link"]

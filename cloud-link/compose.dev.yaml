@@ -2,8 +2,14 @@
 #   docker compose -f compose.yaml -f compose.dev.yaml up --build
 services:
   cloud-link:
-    image: sdk-cloud-link:dev
+    image: spiricloudlink-cloud-link:dev
     build: link
+  camera-whep:
+    image: spiricloudlink-camera-whep:dev
+    build: camera-whep
+  mediamtx:
+    image: spiricloudlink-mediamtx:dev
+    build: mediamtx
   netbird:
-    image: sdk-netbird:dev
+    image: spiricloudlink-netbird:dev
     build: netbird

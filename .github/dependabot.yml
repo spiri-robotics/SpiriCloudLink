@@ -1,0 +1,18 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
+
+  - package-ecosystem: docker
+    directories:
+      - /cloud-link/link
+      - /cloud-link/netbird
+      - /cloud-link/camera-whep
+      - /cloud-link/mediamtx
+    schedule:
+      interval: weekly

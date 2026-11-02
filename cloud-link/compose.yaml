@@ -1,7 +1,8 @@
 # cloud-link: links the robot to its organization's Spiri Cloud, and keeps
-# the configuration the cloud has for it in an env file on the host. Nothing
-# about it is simulated: it's here until there's an Appsource-Spiri-Mu for it
-# to move to. The cloud side's contract is cloud_deploy's docs/drones-api.md.
+# the configuration the cloud has for it in an env file on the host. From
+# SpiriCloudLink (https://github.com/spiri-robotics/SpiriCloudLink), which
+# builds its images. The cloud side's contract is cloud_deploy's
+# docs/drones-api.md.
 #
 # Link from the "Spiri Cloud" page in SpiriConfig. The credential stays in
 # this app's volume. The configuration goes to /var/lib/spiri-cloud/cloud.env
@@ -70,7 +71,7 @@ x-spiri-settings:
 
 services:
   cloud-link:
-    image: ghcr.io/spiri-robotics/spiridevelopmentkit/cloud-link:edge
+    image: ghcr.io/spiri-robotics/spiricloudlink/cloud-link:edge
     restart: unless-stopped
     environment:
       CLOUD_LINK_URL: ${CLOUD_LINK_URL:-}
@@ -88,14 +89,13 @@ services:
       spiriconfig.plugin.icon: cloud
 
   camera-whep:
-    image: ghcr.io/spiri-robotics/spiricamera:edge
+    # SpiriCamera's image, serving a mirror of the camera as WHEP; see
+    # camera-whep/camera_whep.py.
+    image: ghcr.io/spiri-robotics/spiricloudlink/camera-whep:edge
     restart: unless-stopped
-    # A mirror of the camera, served as WHEP; see camera_whep.py.
-    entrypoint: ["python", "/opt/camera-whep/camera_whep.py"]
     environment:
       CLOUD_LINK_CAMERA: ${CLOUD_LINK_CAMERA:-./camera1}
     volumes:
-      - ./camera_whep.py:/opt/camera-whep/camera_whep.py:ro
       # The host's name is the base topic, which ./ is relative to.
       - /etc/hostname:/etc/spirisynq_base_topic:ro
     networks:
@@ -104,14 +104,13 @@ services:
       - "127.0.0.1:8890:8889"
 
   mediamtx:
-    image: bluenviron/mediamtx:1.21.2
+    # The stock MediaMTX with mediamtx/mediamtx.yml: WHEP only, read-only.
+    image: ghcr.io/spiri-robotics/spiricloudlink/mediamtx:edge
     restart: unless-stopped
     network_mode: host
-    volumes:
-      - ./mediamtx.yml:/mediamtx.yml:ro
 
   netbird:
-    image: ghcr.io/spiri-robotics/spiridevelopmentkit/netbird:edge
+    image: ghcr.io/spiri-robotics/spiricloudlink/netbird:edge
     restart: unless-stopped
     network_mode: host
     cap_add:
