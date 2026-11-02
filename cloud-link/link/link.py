@@ -191,26 +191,40 @@ class Link:
 
     def state(self):
         with self.lock:
-            out = dict(name=FIXED_NAME or self.prefs.get("name") or hostname(),
-                       url=fixed_url() or self.prefs.get("url", ""),
-                       url_fixed=bool(FIXED_URL), name_fixed=bool(FIXED_NAME),
-                       notice=self.notice, env_file=str(ENV_FILE))
+            out = dict(
+                name=FIXED_NAME or self.prefs.get("name") or hostname(),
+                url=fixed_url() or self.prefs.get("url", ""),
+                url_fixed=bool(FIXED_URL),
+                name_fixed=bool(FIXED_NAME),
+                notice=self.notice,
+                env_file=str(ENV_FILE),
+            )
             if self.link:
                 env = self.env()
                 # Linked before the setting changed: say so, but leave the link.
                 if FIXED_URL and fixed_url() != self.link["url"]:
                     out["url_mismatch"] = fixed_url()
-                out.update(state="linked", url=self.link["url"], drone_id=self.link.get("drone_id"),
-                           name=env.get("SPIRI_CLOUD_DRONE_NAME") or out["name"],
-                           fetched=self.fetched, fetch_error=self.fetch_error, interval=INTERVAL,
-                           config=[dict(key=k, value=None if SECRET.search(k) else v) for k, v in env.items()])
+                out.update(
+                    state="linked",
+                    url=self.link["url"],
+                    drone_id=self.link.get("drone_id"),
+                    name=env.get("SPIRI_CLOUD_DRONE_NAME") or out["name"],
+                    fetched=self.fetched,
+                    fetch_error=self.fetch_error,
+                    interval=INTERVAL,
+                    config=[dict(key=k, value=None if SECRET.search(k) else v) for k, v in env.items()],
+                )
             elif self.pending:
                 p = self.pending
-                out.update(state="linking", url=p["url"], user_code=p["user_code"],
-                           verification_uri=p["verification_uri"],
-                           verification_uri_complete=p.get("verification_uri_complete"),
-                           expires_in=max(0, round(p["expires_at"] - time.time())),
-                           poll_error=p.get("error"))
+                out.update(
+                    state="linking",
+                    url=p["url"],
+                    user_code=p["user_code"],
+                    verification_uri=p["verification_uri"],
+                    verification_uri_complete=p.get("verification_uri_complete"),
+                    expires_in=max(0, round(p["expires_at"] - time.time())),
+                    poll_error=p.get("error"),
+                )
             else:
                 out.update(state="unlinked")
             return out
@@ -248,8 +262,9 @@ class Link:
         typed = url
         for url in drones_candidates(typed):
             try:
-                status, _, body = request("POST", f"{url}/oauth/device_authorization",
-                                          dict(client_id="spiri-drone", drone_name=name))
+                status, _, body = request(
+                    "POST", f"{url}/oauth/device_authorization", dict(client_id="spiri-drone", drone_name=name)
+                )
             except OSError as e:
                 status, error = None, describe_network_error(e)
             if status == 200:
@@ -266,11 +281,15 @@ class Link:
             write_private(PREFS, json.dumps(self.prefs).encode())
         try:
             dev = json.loads(body)
-            pending = dict(url=url, device_code=dev["device_code"], user_code=dev["user_code"],
-                           verification_uri=dev["verification_uri"],
-                           verification_uri_complete=dev.get("verification_uri_complete"),
-                           expires_at=time.time() + int(dev.get("expires_in", 600)),
-                           interval=int(dev.get("interval", 5)))
+            pending = dict(
+                url=url,
+                device_code=dev["device_code"],
+                user_code=dev["user_code"],
+                verification_uri=dev["verification_uri"],
+                verification_uri_complete=dev.get("verification_uri_complete"),
+                expires_at=time.time() + int(dev.get("expires_in", 600)),
+                interval=int(dev.get("interval", 5)),
+            )
         except (ValueError, KeyError, TypeError):
             raise ValueError(f"{url} gave a link code this robot can't read") from None
         with self.lock:
@@ -297,8 +316,9 @@ class Link:
                     self.pending, self.notice = None, "The link code ran out before it was approved."
                     return
             try:
-                status, _, body = request("POST", f"{p['url']}/oauth/token",
-                                          dict(grant_type=DEVICE_GRANT, device_code=p["device_code"]))
+                status, _, body = request(
+                    "POST", f"{p['url']}/oauth/token", dict(grant_type=DEVICE_GRANT, device_code=p["device_code"])
+                )
             except OSError as e:
                 p["error"] = describe_network_error(e)
                 continue
@@ -353,8 +373,11 @@ class Link:
             raise ValueError(f"the cloud wouldn't unlink this robot ({status})")
         with self.lock:
             if self.link is link:
-                self.forget("Unlinked." if status in (204, 401) else
-                            "Forgotten on this robot. It may still be listed in the cloud; unlink it there too.")
+                self.forget(
+                    "Unlinked."
+                    if status in (204, 401)
+                    else "Forgotten on this robot. It may still be listed in the cloud; unlink it there too."
+                )
 
     # --- the env file -------------------------------------------------------
 
