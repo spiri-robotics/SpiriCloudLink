@@ -4,9 +4,6 @@ services:
   cloud-link:
     image: spiricloudlink-cloud-link:dev
     build: link
-  camera-whep:
-    image: spiricloudlink-camera-whep:dev
-    build: camera-whep
   mediamtx:
     image: spiricloudlink-mediamtx:dev
     build: mediamtx

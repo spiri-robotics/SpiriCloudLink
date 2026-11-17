@@ -30,7 +30,7 @@ jobs:
       fail-fast: false
       matrix:
         # Keep in step with merge's.
-        name: [cloud-link, netbird, camera-whep, mediamtx]
+        name: [cloud-link, netbird, mediamtx]
         arch:
           - { name: amd64, platform: linux/amd64, runner: ubuntu-24.04 }
           - { name: arm64, platform: linux/arm64, runner: ubuntu-24.04-arm }
@@ -94,7 +94,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        name: [cloud-link, netbird, camera-whep, mediamtx]
+        name: [cloud-link, netbird, mediamtx]
     steps:
       - uses: actions/download-artifact@v4
         with:

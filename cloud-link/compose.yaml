@@ -22,12 +22,12 @@
 #
 # Video: the cloud's Frigate pulls the robot's camera over WHEP from port
 # 8889 on its NetBird address, at /camera/whep (docs/drones-api.md, "Serve
-# live video"). camera-whep is a zenoh app, so it stays on `spirisynq` like
-# every zenoh app: it consumes the camera named in the Camera setting over
-# SpiriSynq and serves it as WHEP (H.264) only on the robot's loopback.
-# mediamtx, on the host network with no zenoh in it (only zenoh-router-host
-# may be), pulls that while someone is watching and serves it on the robot's
-# own addresses, NetBird's included, relaying the H.264 untouched. Nobody
+# live video"). mediamtx, on the host network with no zenoh in it (only
+# zenoh-router-host may be), pulls SpiriCamera's camera-ingress over RTSP
+# from its relay mount on the robot's loopback (the stream in the Stream
+# setting, at rtsp://127.0.0.1:8554/<stream>/relay) while someone is
+# watching, and serves it as WHEP on the robot's own addresses, NetBird's
+# included, relaying the camera's H.264 untouched. Nobody
 # outside can reach it until netbird has joined the VPN; NetBird's ACLs let
 # only the organization's Frigate in.
 #
@@ -40,12 +40,18 @@
 # networking puts the VPN interface (wt0) in the robot's own network, so the
 # organization's peers reach the robot itself, at its NetBird address.
 x-spiri-settings:
-  - env: CLOUD_LINK_CAMERA
-    label: Camera
+  - env: CLOUD_LINK_STREAM
+    label: Stream
+    widget: select
     help: >-
-      The SpiriSynq camera Spiri Cloud's Frigate is shown, by topic.
-      ./camera1 means this robot's first camera, <robot>/camera1.
-    default: ./camera1
+      Which of camera-ingress's streams Spiri Cloud's Frigate is shown: raw,
+      the camera's own picture; hud, with the HUD drawn on it; or preview, a
+      small thumbnail at one frame a second.
+    default: raw
+    options:
+      - raw
+      - hud
+      - preview
   - env: CLOUD_LINK_URL
     label: Cloud address
     help: >-
@@ -88,26 +94,13 @@ services:
       spiriconfig.plugin.title: Spiri Cloud
       spiriconfig.plugin.icon: cloud
 
-  camera-whep:
-    # SpiriCamera's image, serving a mirror of the camera as WHEP; see
-    # camera-whep/camera_whep.py.
-    image: ghcr.io/spiri-robotics/spiricloudlink/camera-whep:edge
-    restart: unless-stopped
-    environment:
-      CLOUD_LINK_CAMERA: ${CLOUD_LINK_CAMERA:-./camera1}
-    volumes:
-      # The host's name is the base topic, which ./ is relative to.
-      - /etc/hostname:/etc/spirisynq_base_topic:ro
-    networks:
-      - spirisynq
-    ports:
-      - "127.0.0.1:8890:8889"
-
   mediamtx:
     # The stock MediaMTX with mediamtx/mediamtx.yml: WHEP only, read-only.
     image: ghcr.io/spiri-robotics/spiricloudlink/mediamtx:edge
     restart: unless-stopped
     network_mode: host
+    environment:
+      MTX_PATHS_CAMERA_SOURCE: rtsp://127.0.0.1:8554/${CLOUD_LINK_STREAM:-raw}/relay
 
   netbird:
     image: ghcr.io/spiri-robotics/spiricloudlink/netbird:edge

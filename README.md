@@ -55,30 +55,23 @@ simulated robot's docker-in-docker too: the robot is privileged, so inner
 containers get `/dev/net/tun`, and the host kernel's WireGuard is used.
 
 **Video.** Frigate pulls WHEP from `/camera/whep`, port 8889, on the robot's
-NetBird address. Two services serve it:
+NetBird address. `mediamtx`, MediaMTX on the host network with no zenoh in it
+([`mediamtx.yml`](cloud-link/mediamtx/mediamtx.yml)), serves it. While someone
+is watching, it pulls SpiriCamera's camera-ingress over RTSP from its relay
+mount on the robot's loopback, `rtsp://127.0.0.1:8554/<stream>/relay` (TCP),
+where `<stream>` is the *Stream* setting: `raw` by default, or `hud` or
+`preview`. It serves that on the robot's own addresses, media on one fixed UDP
+port (8189), relaying the camera's own H.264 without decoding it.
 
-- `camera-whep` ([`camera_whep.py`](cloud-link/camera-whep/camera_whep.py), on
-  the SpiriCamera image) mirrors the camera named in the *Camera* setting
-  (`./camera1`, i.e. `<robot>/camera1`, by default) and serves it through
-  SpiriCamera's WHEP app, only on the robot's loopback. A mirror publishes
-  nothing of its own, and each JPEG the camera publishes is encoded to H.264
-  once. It's a zenoh app, so it stays on `spirisynq`: only the external half
-  of the zenoh-router bridge may use host networking, since that bridge is
-  where the robot's zenoh permissions are enforced.
-- `mediamtx`, MediaMTX on the host network with no zenoh in it
-  ([`mediamtx.yml`](cloud-link/mediamtx/mediamtx.yml)). It pulls
-  `camera-whep` while someone is watching and serves it on the robot's own
-  addresses, media on one fixed UDP port (8189), relaying the H.264 without
-  decoding it.
-
-So no camera app changes for Spiri Cloud. Video is the one thing that leaves a
+So no camera app changes for Spiri Cloud: it needs a camera-ingress that serves RTSP
+(SpiriCamera after 0.2.2). Video is the one thing that leaves a
 robot outside zenoh, and NetBird's ACLs, not the zenoh router, are its gate.
 
 ## Images
 
 Each directory with a Dockerfile under `cloud-link/` is an image,
 `ghcr.io/spiri-robotics/spiricloudlink/<name>`: `cloud-link` (the link and its
-page), `netbird`, `camera-whep` and `mediamtx`. `main` publishes `edge`;
+page), `netbird` and `mediamtx`. `main` publishes `edge`;
 release tags (`vX.Y.Z`) publish `X.Y.Z`, `X.Y` and `latest`.
 
 ## Development

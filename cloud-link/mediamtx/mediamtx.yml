@@ -31,8 +31,11 @@ authInternalUsers:
       - action: read
 
 paths:
-  # camera-whep's WHEP endpoint, on the robot's loopback. Pulled only while
-  # someone is watching, so an unwatched camera costs no encoding.
+  # The camera's own H.264, from SpiriCamera's relay mount on the robot's
+  # loopback, relayed untouched. Overridden by MTX_PATHS_CAMERA_SOURCE, from
+  # the Stream setting. The relay mount is TCP only. Pulled only while someone
+  # is watching, so an unwatched camera costs no encoding.
   camera:
-    source: whep://127.0.0.1:8890/whep
+    source: rtsp://127.0.0.1:8554/raw/relay
+    rtspTransport: tcp
     sourceOnDemand: yes

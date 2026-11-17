@@ -12,7 +12,6 @@ updates:
     directories:
       - /cloud-link/link
       - /cloud-link/netbird
-      - /cloud-link/camera-whep
       - /cloud-link/mediamtx
     schedule:
       interval: weekly
